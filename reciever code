@@ -1,0 +1,87 @@
+Here is a possible receiver code for CAN bus using MCP_CAN library, based on the search results¹²:
+
+```c
+#include <mcp_can.h>
+#include <SPI.h>
+
+// Initialize MCP_CAN object
+MCP_CAN CAN0(10); // CAN0 interface using CS on digital pin 10
+
+// Define variables to store received data
+byte ldr_data[2];
+byte dht_data[4];
+byte mq2_data[2];
+byte ir_data[0];
+
+void setup()
+{
+  Serial.begin(115200);
+
+  // Initialize CAN0 bus, baudrate: 500k@16MHz
+  if(CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_16MHZ) == CAN_OK)
+    Serial.println("CAN0: Init OK!");
+  else
+    Serial.println("CAN0: Init Fail!");
+
+  // Set CAN0 mode to normal operation
+  CAN0.setMode(MCP_NORMAL);
+}
+
+void loop()
+{
+  // Check if there is any message received
+  if(CAN0.checkReceive() == CAN_MSGAVAIL)
+  {
+    // Read the message and store the ID and data
+    long unsigned int rxId;
+    unsigned char len = 0;
+    unsigned char rxBuf[8];
+    CAN0.readMsgBuf(&rxId, &len, rxBuf);
+
+    // Print the ID and data to serial monitor
+    Serial.print("ID: ");
+    Serial.print(rxId, HEX);
+    Serial.print(" Data: ");
+    for(int i = 0; i<len; i++)
+    {
+      Serial.print(rxBuf[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+
+    // Check the ID and store the data accordingly
+    switch (rxId)
+    {
+      case 0x100: // LDR data
+        ldr_data[0] = rxBuf[0]; // High byte
+        ldr_data[1] = rxBuf[1]; // Low byte
+        break;
+      case 0x101: // DHT11 data
+        dht_data[0] = rxBuf[0]; // Temperature high byte
+        dht_data[1] = rxBuf[1]; // Temperature low byte
+        dht_data[2] = rxBuf[2]; // Humidity high byte
+        dht_data[3] = rxBuf[3]; // Humidity low byte
+        break;
+      case 0x102: // MQ2 data
+        mq2_data[0] = rxBuf[0]; // High byte
+        mq2_data[1] = rxBuf[1]; // Low byte
+        break;
+      case 0x103: // IR data
+        ir_data[0] = rxBuf[0]; // Single byte
+        break;
+      default:
+        break;
+    }
+    
+   }
+}
+```
+
+I hope this helps. Please let me know if you have any other questions or feedback. 😊
+
+Source: Conversation with Bing, 2/8/2023
+(1) Arduino Can-Bus (Wired) Communication | Arduino | Maker Pro. https://maker.pro/arduino/projects/arduino-can-bus-wired-communication.
+(2) Arduino MCP2515 CAN Bus Interface Tutorial - Circuits Geek. https://circuitsgeek.com/guides-and-how-to/arduino-mcp2515-can-bus-interface-tutorial/.
+(3) Library: mcp_can - Arduino IDE. http://codebender.cc/library/mcp_can.
+(4) MCP2515 CAN-BUS Arduino Tutorial - Seeed Studio. https://www.seeedstudio.com/blog/2020/06/05/mcp2515-can-bus-arduino-tutorial-getting-started-interfacing-applications/.
+(5) Interfacing MCP2515 CAN BUS Module with Arduino - Circuit Digest. https://circuitdigest.com/microcontroller-projects/arduino-can-tutorial-interfacing-mcp2515-can-bus-module-with-arduino.
